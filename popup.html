@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zendesk Ticket Summarizer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="bg-white font-sans text-zendesk-text">
+  <div class="p-4 relative">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4 border-b border-zendesk-border pb-3">
+      <div class="flex items-center">
+        <div class="text-zendesk-teal mr-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+        <h1 class="text-lg font-semibold text-zendesk-text">ZD Summarizer</h1>
+      </div>
+      
+      <div class="flex items-center">
+        <button 
+          id="settingsBtn" 
+          class="text-zendesk-teal hover:text-zendesk-blue focus:outline-none"
+          title="Settings">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content Area - initial state -->
+    <div id="mainContent" class="space-y-4">
+      <!-- Current Ticket Info -->
+      <div class="space-y-3">
+        <div class="bg-gray-50 p-3 rounded-md border border-zendesk-border">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-medium text-zendesk-teal">Current Ticket:</h3>
+              <div class="flex items-center mt-1">
+                <span id="currentTicketId" class="text-lg font-semibold mr-2">--</span>
+                <span id="ticketStatus" class="text-xs bg-zendesk-lightGrey text-zendesk-text px-2 py-0.5 rounded">Not detected</span>
+              </div>
+            </div>
+            <button 
+              id="scanCurrentBtn" 
+              class="text-zendesk-teal hover:text-zendesk-blue focus:outline-none" 
+              title="Refresh ticket detection">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <button 
+          id="extractBtn" 
+          disabled
+          class="w-full bg-zendesk-teal hover:bg-zendesk-blue text-white font-medium py-2 px-4 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zendesk-teal opacity-50 cursor-not-allowed">
+          Extract Information
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="py-6 text-center text-gray-500">
+        <div class="flex justify-center mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-zendesk-lightGrey" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <p>Press "Extract Information" to analyze the current ticket and extract important details</p>
+      </div>
+      
+      <!-- Loading State (hidden by default) -->
+      <div id="loadingState" class="py-4 text-center hidden">
+        <div class="flex flex-col items-center">
+          <div class="w-10 h-10 border-4 border-zendesk-teal border-t-transparent rounded-full animate-spin mb-3"></div>
+          <p id="loadingText">Analyzing ticket conversation...</p>
+        </div>
+      </div>
+
+      <!-- Summary Result (hidden by default) -->
+      <div id="summaryResult" class="border border-zendesk-border rounded-md p-3 bg-gray-50 hidden">
+        <h3 class="font-medium mb-2 text-zendesk-teal">Extracted Information:</h3>
+        <div id="summaryContent" class="text-sm space-y-1">
+          <!-- Summarized content will be inserted here dynamically -->
+        </div>
+        <div id="tokenUsage" class="hidden">
+          <!-- Token usage will be inserted here dynamically -->
+        </div>
+      </div>
+
+      <!-- Summary Actions (hidden by default) -->
+      <div id="summaryActions" class="space-y-3 hidden">
+        <!-- Follow-up Questions Section -->
+        <div class="border border-zendesk-border rounded-md p-3 bg-white">
+          <h3 class="font-medium mb-2 text-zendesk-teal">Ask a follow-up question:</h3>
+          <textarea 
+            id="followupQuestion" 
+            class="w-full px-3 py-2 border border-zendesk-border rounded-md focus:outline-none focus:ring-2 focus:ring-zendesk-teal focus:border-transparent mb-2"
+            placeholder="Ask a specific question about this ticket... (Ctrl+Enter to submit)"
+            rows="2"
+          ></textarea>
+          <button 
+            id="askFollowupBtn" 
+            class="w-full bg-zendesk-teal hover:bg-zendesk-blue text-white font-medium py-2 px-4 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zendesk-teal">
+            Ask Question
+          </button>
+          <div id="followupAnswer" class="mt-3 text-sm border-t border-zendesk-border pt-2 hidden">
+            <span class="font-medium">Answer:</span>
+            <p id="followupAnswerText" class="mt-1"></p>
+          </div>
+        </div>
+        
+        <button 
+          id="copyBtn" 
+          class="w-full bg-white border border-zendesk-border hover:bg-gray-50 text-zendesk-text font-medium py-2 px-4 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zendesk-teal">
+          Copy to Clipboard
+        </button>
+        
+        <div class="flex space-x-2 mt-2">
+          <button 
+            id="viewUsageDetailsBtn" 
+            class="flex-1 text-xs bg-white border border-zendesk-border hover:bg-gray-50 text-zendesk-text py-1 px-2 rounded-md transition duration-200 focus:outline-none">
+            View Usage Details
+          </button>
+          
+          <button 
+            id="resetUsageBtn" 
+            class="flex-1 text-xs bg-white border border-zendesk-border hover:bg-gray-50 text-zendesk-text py-1 px-2 rounded-md transition duration-200 focus:outline-none">
+            Reset Usage Stats
+          </button>
+        </div>
+      </div>
+
+      <!-- Error Message (hidden by default) -->
+      <div id="errorMessage" class="border border-zendesk-error bg-red-50 rounded-md p-3 text-zendesk-error hidden">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p id="errorText" class="text-sm">Error: Could not retrieve ticket information. Please check the ticket ID and try again.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Panel (hidden by default) -->
+    <div id="settingsPanel" class="absolute inset-0 bg-white p-4 hidden">
+      <div class="flex items-center justify-between mb-4 border-b border-zendesk-border pb-3">
+        <h2 class="text-lg font-semibold">Settings</h2>
+        <button 
+          id="closeSettingsBtn" 
+          class="text-zendesk-teal hover:text-zendesk-blue focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label for="zendeskDomain" class="block text-sm font-medium mb-1">Zendesk Domain</label>
+          <input 
+            type="text" 
+            id="zendeskDomain" 
+            placeholder="yourdomain.zendesk.com" 
+            class="w-full px-3 py-2 border border-zendesk-border rounded-md focus:outline-none focus:ring-2 focus:ring-zendesk-teal focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label for="zendeskEmail" class="block text-sm font-medium mb-1">Zendesk Email</label>
+          <input 
+            type="email" 
+            id="zendeskEmail" 
+            placeholder="your@email.com" 
+            class="w-full px-3 py-2 border border-zendesk-border rounded-md focus:outline-none focus:ring-2 focus:ring-zendesk-teal focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label for="zendeskToken" class="block text-sm font-medium mb-1">Zendesk API Token</label>
+          <input 
+            type="password" 
+            id="zendeskToken" 
+            placeholder="API Token" 
+            class="w-full px-3 py-2 border border-zendesk-border rounded-md focus:outline-none focus:ring-2 focus:ring-zendesk-teal focus:border-transparent"
+          />
+        </div>
+        
+        <div>
+          <label for="openaiKey" class="block text-sm font-medium mb-1">OpenAI API Key</label>
+          <input 
+            type="password" 
+            id="openaiKey" 
+            placeholder="OpenAI API Key" 
+            class="w-full px-3 py-2 border border-zendesk-border rounded-md focus:outline-none focus:ring-2 focus:ring-zendesk-teal focus:border-transparent"
+          />
+        </div>
+
+        <div class="mt-6 mb-2 border-t border-zendesk-border pt-4">
+          <h3 class="font-medium text-zendesk-teal">Appearance</h3>
+        </div>
+        
+        <div class="flex items-center justify-between mb-4">
+          <label for="darkMode" class="block text-sm font-medium">
+            Dark Mode
+          </label>
+          <div class="relative inline-block w-10 align-middle select-none">
+            <input 
+              type="checkbox" 
+              id="darkMode" 
+              class="sr-only"
+            />
+            <div class="block h-6 bg-zendesk-lightGrey rounded-full cursor-pointer"></div>
+            <div class="dot absolute left-1 top-1 h-4 w-4 bg-white rounded-full transition-transform duration-200 ease-in-out"></div>
+          </div>
+        </div>
+
+        <div class="mt-6 mb-2 border-t border-zendesk-border pt-4">
+          <h3 class="font-medium text-zendesk-teal">Local LLM Settings</h3>
+        </div>
+
+        <div class="flex items-center mb-4">
+          <input 
+            type="checkbox" 
+            id="useOllama" 
+            class="h-4 w-4 text-zendesk-teal focus:ring-zendesk-teal border-zendesk-border rounded"
+          />
+          <label for="useOllama" class="ml-2 block text-sm font-medium">
+            Use Local LLM (Ollama) instead of OpenAI
+          </label>
+        </div>
+        
+        <div>
+          <div class="flex justify-between items-center">
+            <label for="ollamaUrl" class="block text-sm font-medium mb-1">Ollama URL</label>
+            <div id="ollamaStatus" class="text-xs flex items-center opacity-0 transition-opacity duration-200">
+              <span id="ollamaStatusText" class="mr-1">Not connected</span>
+              <span id="ollamaStatusIndicator" class="inline-block w-3 h-3 rounded-full bg-red-500"></span>
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            <input 
+              type="text" 
+              id="ollamaUrl" 
+              placeholder="http://localhost:11434" 
+              class="flex-1 px-3 py-2 border border-zendesk-border rounded-md focus:outline-none focus:ring-2 focus:ring-zendesk-teal focus:border-transparent"
+            />
+            <button 
+              id="testOllamaBtn" 
+              class="px-3 py-2 bg-zendesk-lightGrey hover:bg-gray-300 text-zendesk-text rounded-md transition duration-200 focus:outline-none"
+              title="Test Ollama connection"
+            >
+              Test
+            </button>
+          </div>
+        </div>
+        
+        <div class="mt-2">
+          <label for="ollamaModel" class="block text-sm font-medium mb-1">Ollama Model</label>
+          <div class="flex space-x-2">
+            <select 
+              id="ollamaModel" 
+              class="flex-1 px-3 py-2 border border-zendesk-border rounded-md focus:outline-none focus:ring-2 focus:ring-zendesk-teal focus:border-transparent"
+            >
+              <option value="">-- Select model --</option>
+            </select>
+            <button 
+              id="fetchModelsBtn" 
+              class="px-3 py-2 bg-zendesk-lightGrey hover:bg-gray-300 text-zendesk-text rounded-md transition duration-200 focus:outline-none"
+              title="Fetch available models from Ollama"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+          <div id="modelFetchStatus" class="hidden mt-1 text-xs"></div>
+          <p class="mt-1 text-xs text-zendesk-text">Models must be pulled in Ollama first. Click the refresh button to fetch available models.</p>
+        </div>
+        
+        <div class="mt-6 mb-2 border-t border-zendesk-border pt-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-medium text-zendesk-teal">Prompt Settings</h3>
+            <button 
+              id="resetPromptBtn" 
+              class="text-xs text-zendesk-teal hover:underline"
+            >
+              Reset to default
+            </button>
+          </div>
+        </div>
+        
+        <div>
+          <label for="promptTemplate" class="block text-sm font-medium mb-1">System Prompt Template</label>
+          <textarea 
+            id="promptTemplate" 
+            rows="8" 
+            class="w-full px-3 py-2 border border-zendesk-border rounded-md focus:outline-none focus:ring-2 focus:ring-zendesk-teal focus:border-transparent font-mono text-sm"
+            placeholder="Enter your custom system prompt here..."
+          ></textarea>
+          <p class="mt-1 text-xs text-zendesk-text">Available variables: <span class="font-mono">{{ticketId}}</span>, <span class="font-mono">{{tagContext}}</span>, <span class="font-mono">{{productModel}}</span>, <span class="font-mono">{{warrantyStatus}}</span>, <span class="font-mono">{{ticketUrgency}}</span>, <span class="font-mono">{{ticketContent}}</span></p>
+        </div>
+        
+        <div class="pt-4">
+          <button 
+            id="saveSettingsBtn" 
+            class="w-full bg-zendesk-teal hover:bg-zendesk-blue text-white font-medium py-2 px-4 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zendesk-teal">
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Toast (hidden by default) -->
+    <div id="successToast" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-zendesk-success text-white px-4 py-2 rounded-md shadow-lg hidden">
+      <span id="toastMessage">Successfully autofilled fields!</span>
+    </div>
+  </div>
+
+  <script src="lib/storage.js"></script>
+  <script src="lib/openai.js"></script>
+  <script src="lib/zendesk.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

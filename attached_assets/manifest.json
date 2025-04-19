@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Zendesk Ticket Summarizer",
+  "version": "1.0",
+  "description": "Summarize Zendesk tickets using AI",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon.png"
+  },
+  "host_permissions": [
+    "https://*.zendesk.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
