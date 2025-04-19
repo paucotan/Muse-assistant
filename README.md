@@ -1,5 +1,5 @@
 # Muse Assistant
-![Muse Assistant Logo](/attached_assets/logo.png)
+![Muse Assistant Logo](/attached_assets/muse.png)
 A Chrome extension that enhances Zendesk support workflows through intelligent AI-powered ticket analysis, providing support agents with streamlined, actionable insights.
 
 ## Features
