@@ -1,5 +1,9 @@
-# Muse Assistant
-![Muse Assistant Logo](/attached_assets/muse.png)
+<div align=center>
+<h1> Muse Assistant
+</h1></div>
+<div align="center">
+  <img src="attached_assets/muse.png" alt="Muse Logo" width="200"/>
+</div><br>
 A Chrome extension that enhances Zendesk support workflows through intelligent AI-powered ticket analysis, providing support agents with streamlined, actionable insights.
 
 ## Features
